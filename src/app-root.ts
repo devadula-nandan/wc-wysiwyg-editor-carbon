@@ -7,7 +7,6 @@ import "./pages/control-panel.js";
 
 // Utilities
 import { URLUtils } from "./utils/url.utils.js";
-import { DOMUtils } from "./utils/dom.utils.js";
 
 // Types
 import type { AppState } from "./types/app.types.js";
