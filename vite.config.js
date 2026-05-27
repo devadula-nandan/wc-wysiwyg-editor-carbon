@@ -2,6 +2,6 @@ import { defineConfig } from "vite";
 import litCss from "vite-plugin-lit-css";
 
 export default defineConfig({
-  base: "./",
+  base: "/wc-wysiwyg-editor-carbon/",
   plugins: [litCss()],
 });
