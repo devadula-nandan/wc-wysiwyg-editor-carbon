@@ -1,0 +1,175 @@
+@use "@carbon/styles/scss/spacing" as *;
+@use "@carbon/styles/scss/theme" as *;
+@use "@carbon/styles/scss/type" as *;
+
+$prefix: "wc";
+
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: $layer-01;
+  border: 1px solid $border-subtle-01;
+}
+
+.toolbar {
+  background: $layer;
+  margin-inline-start: -1px;
+  box-shadow: inset 0 -1px 0 0 $border-subtle-01;
+
+  svg {
+    pointer-events: none;
+  }
+
+  cds-icon-button[disabled]::part(button) {
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: $text-disabled;
+  }
+}
+
+.toolbar-group {
+  flex-direction: row;
+  background: $layer;
+  border: 1px solid $border-subtle-01;
+  margin-block-start: -1px;
+  margin-inline-end: -1px;
+}
+
+.editor-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-05;
+  background: $background;
+}
+
+.ProseMirror {
+  outline: none;
+  min-height: 200px;
+  color: $text-primary;
+
+  h1 {
+    @include type-style("heading-05");
+    margin: $spacing-05 0 $spacing-03;
+    color: $text-primary;
+  }
+
+  h2 {
+    @include type-style("heading-04");
+    margin: $spacing-05 0 $spacing-03;
+    color: $text-primary;
+  }
+
+  h3 {
+    @include type-style("heading-03");
+    margin: $spacing-05 0 $spacing-03;
+    color: $text-primary;
+  }
+
+  p {
+    @include type-style("body-01");
+    margin: 0;
+  }
+
+  ul,
+  ol {
+    padding-left: $spacing-06;
+    margin: $spacing-03 0;
+  }
+
+  li {
+    @include type-style("body-01");
+    margin: $spacing-02 0;
+  }
+
+  blockquote {
+    border-left: 3px solid $border-strong;
+    padding-left: $spacing-05;
+    margin: $spacing-05 0;
+    color: $text-secondary;
+  }
+
+  code {
+    @include type-style("code-01");
+    background: $layer-01;
+    padding: $spacing-01 $spacing-02;
+    border-radius: 3px;
+  }
+
+  pre {
+    @include type-style("code-01");
+    background: $layer-01;
+    padding: $spacing-05;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: $spacing-05 0;
+
+    code {
+      background: none;
+      padding: 0;
+    }
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: $spacing-05 0;
+    overflow: hidden;
+  }
+
+  th,
+  td {
+    border: 1px solid $border-subtle;
+    padding: $spacing-03;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    @include type-style("heading-01");
+    background: $layer-01;
+  }
+
+  td {
+    @include type-style("body-01");
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+  }
+
+  a {
+    color: $link-primary;
+    text-decoration: underline;
+
+    &:hover {
+      color: $link-primary-hover;
+    }
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid $border-subtle;
+    margin: $spacing-05 0;
+  }
+
+  .selectedCell {
+    background: $layer-selected-01;
+  }
+}
+
+.modal-content {
+  padding: $spacing-05;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-05;
+}

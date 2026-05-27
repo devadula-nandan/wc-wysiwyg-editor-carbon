@@ -1,0 +1,51 @@
+{
+  "name": "wc-wysiwyg-editor-carbon",
+  "version": "1.0.0",
+  "description": "A robust WYSIWYG editor web component built with TipTap and Carbon Design System",
+  "type": "module",
+  "author": "Nandan",
+  "license": "Apache-2.0",
+  "keywords": [
+    "wysiwyg",
+    "editor",
+    "rich-text",
+    "tiptap",
+    "carbon-design-system",
+    "web-components",
+    "lit"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devadula-nandan/wc-wysiwyg-editor-carbon.git"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@carbon/icons": "^11.81.0",
+    "@carbon/web-components": "^2.55.0",
+    "@tiptap/core": "^3.23.6",
+    "@tiptap/extension-color": "^3.23.6",
+    "@tiptap/extension-image": "^3.23.6",
+    "@tiptap/extension-link": "^3.23.6",
+    "@tiptap/extension-table": "^3.23.6",
+    "@tiptap/extension-table-cell": "^3.23.6",
+    "@tiptap/extension-table-header": "^3.23.6",
+    "@tiptap/extension-table-row": "^3.23.6",
+    "@tiptap/extension-text-align": "^3.23.6",
+    "@tiptap/extension-text-style": "^3.23.6",
+    "@tiptap/extension-underline": "^3.23.6",
+    "@tiptap/pm": "^3.23.6",
+    "@tiptap/starter-kit": "^3.23.6",
+    "lit": "^3.3.1"
+  },
+  "devDependencies": {
+    "sass": "^1.100.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.4",
+    "vite-plugin-lit-css": "^3.0.0"
+  }
+}
