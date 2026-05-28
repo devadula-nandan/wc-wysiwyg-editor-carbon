@@ -73,17 +73,13 @@ export class WcWysiwyg extends LitElement {
     DEFAULT_EDITOR_CONFIG.orientation as EditorOrientation;
 
   // Private state
-  @state()
-  private modalState: ModalState = {
+  @state() private modalState: ModalState = {
     showLinkModal: false,
     showImageModal: false,
     linkUrl: "",
     imageUrl: "",
   };
-
-  @query("cds-stack.toolbar")
-  private toolbarEl!: HTMLElement;
-
+  @query("cds-stack.toolbar") private toolbarEl!: HTMLElement;
   // Services
   private editorService = new EditorService();
   private editor: Editor | null = null;
@@ -140,7 +136,13 @@ export class WcWysiwyg extends LitElement {
    */
   private handleEditorUpdate(editor: Editor): void {
     this.content = editor.getHTML();
-    this.dispatchContentChangeEvent();
+    this.dispatchEvent(
+      new CustomEvent("content-change", {
+        detail: { content: this.content, editor: this.editor },
+        bubbles: true,
+        composed: true,
+      }),
+    );
     this.requestUpdate();
   }
 
@@ -152,40 +154,28 @@ export class WcWysiwyg extends LitElement {
   }
 
   /**
-   * Dispatch content change event
-   */
-  private dispatchContentChangeEvent(): void {
-    this.dispatchEvent(
-      new CustomEvent("content-change", {
-        detail: { content: this.content, editor: this.editor },
-        bubbles: true,
-        composed: true,
-      }),
-    );
-  }
-
-  /**
    * Apply custom styles to Carbon components
    */
   private async applyCustomStyles(): Promise<void> {
-    // Remove dropdown borders
-    const dropdowns = this.renderRoot.querySelectorAll("cds-dropdown");
-    dropdowns.forEach((dropdown) => DOMUtils.removeDropdownBorder(dropdown));
-
-    // Override toolbar stack display
-    if (this.toolbarEl) {
-      DOMUtils.overrideStackDisplay(this.toolbarEl);
-    }
+    this.renderRoot
+      .querySelectorAll("cds-dropdown")
+      .forEach((dropdown) => DOMUtils.removeDropdownBorder(dropdown));
+    if (this.toolbarEl) DOMUtils.overrideStackDisplay(this.toolbarEl);
   }
 
   /**
    * Initialize focusable elements for keyboard navigation
    */
   private initializeFocusableElements(): void {
-    requestAnimationFrame(() => {
-      const focusables = this.getFocusableElements();
-      DOMUtils.updateTabIndexes(focusables, 0);
-    });
+    requestAnimationFrame(() =>
+      DOMUtils.updateTabIndexes(
+        DOMUtils.getFocusableElements(
+          this.renderRoot as ShadowRoot,
+          FOCUSABLE_SELECTORS,
+        ),
+        0,
+      ),
+    );
   }
 
   /**
@@ -202,31 +192,51 @@ export class WcWysiwyg extends LitElement {
    * Handle keyboard navigation
    */
   private handleKeydown = (event: KeyboardEvent): void => {
-    if (!NAVIGATION_KEYS.all.includes(event.key as any)) {
+    if (!NAVIGATION_KEYS.all.includes(event.key as any)) return;
+
+    const editorContent = this.shadowRoot?.querySelector(".editor-content");
+    const activeElement =
+      this.shadowRoot?.activeElement || document.activeElement;
+
+    if (
+      editorContent?.contains(activeElement as Node) ||
+      editorContent === activeElement ||
+      (activeElement &&
+        editorContent
+          ?.querySelector(".ProseMirror")
+          ?.contains(activeElement as Node))
+    )
       return;
-    }
 
     const elements = this.getFocusableElements();
     const current = elements.findIndex(
       (btn) => btn.getAttribute("tabindex") === "0",
     );
-
-    if (current === -1) {
-      return;
-    }
+    if (current === -1) return;
 
     event.preventDefault();
     const horizontal = this.orientation === "horizontal";
+    let next: number;
 
-    let next = current;
-    if (event.key === "ArrowRight" && horizontal) {
-      next = (current + 1) % elements.length;
-    } else if (event.key === "ArrowLeft" && horizontal) {
-      next = (current - 1 + elements.length) % elements.length;
-    } else if (event.key === "ArrowDown" && !horizontal) {
-      next = (current + 1) % elements.length;
-    } else if (event.key === "ArrowUp" && !horizontal) {
-      next = (current - 1 + elements.length) % elements.length;
+    switch (event.key) {
+      case "ArrowRight":
+        next = horizontal ? (current + 1) % elements.length : current;
+        break;
+      case "ArrowLeft":
+        next = horizontal
+          ? (current - 1 + elements.length) % elements.length
+          : current;
+        break;
+      case "ArrowDown":
+        next = !horizontal ? (current + 1) % elements.length : current;
+        break;
+      case "ArrowUp":
+        next = !horizontal
+          ? (current - 1 + elements.length) % elements.length
+          : current;
+        break;
+      default:
+        next = current;
     }
 
     DOMUtils.updateTabIndexes(elements, next);
@@ -250,30 +260,22 @@ export class WcWysiwyg extends LitElement {
 
   // Modal handlers
   private openLinkModal = (): void => {
-    const previousUrl = this.editorService.getLinkAttributes()?.href || "";
     this.modalState = {
       ...this.modalState,
       showLinkModal: true,
-      linkUrl: previousUrl,
+      linkUrl: this.editorService.getLinkAttributes()?.href || "",
     };
   };
 
   private closeLinkModal = (): void => {
-    this.modalState = {
-      ...this.modalState,
-      showLinkModal: false,
-      linkUrl: "",
-    };
+    this.modalState = { ...this.modalState, showLinkModal: false, linkUrl: "" };
   };
 
   private setLink = (): void => {
-    if (!this.modalState.linkUrl) {
-      this.editorService.unsetLink();
-    } else if (URLUtils.isValidURL(this.modalState.linkUrl)) {
+    if (!this.modalState.linkUrl) this.editorService.unsetLink();
+    else if (URLUtils.isValidURL(this.modalState.linkUrl))
       this.editorService.setLink({ href: this.modalState.linkUrl });
-    } else {
-      console.warn("Invalid URL provided");
-    }
+    else console.warn("Invalid URL provided");
     this.closeLinkModal();
   };
 
@@ -283,10 +285,7 @@ export class WcWysiwyg extends LitElement {
   };
 
   private openImageModal = (): void => {
-    this.modalState = {
-      ...this.modalState,
-      showImageModal: true,
-    };
+    this.modalState = { ...this.modalState, showImageModal: true };
   };
 
   private closeImageModal = (): void => {
@@ -304,9 +303,7 @@ export class WcWysiwyg extends LitElement {
     ) {
       this.editorService.insertImage({ src: this.modalState.imageUrl });
       this.closeImageModal();
-    } else {
-      console.warn("Invalid image URL provided");
-    }
+    } else console.warn("Invalid image URL provided");
   };
 
   /**
@@ -412,19 +409,19 @@ export class WcWysiwyg extends LitElement {
         : this.isActive("heading", { level: 3 })
           ? "h3"
           : "p";
-
     return html`
       <cds-stack class="toolbar-group" orientation=${this.orientation}>
         <cds-dropdown
           value=${currentValue}
           @cds-dropdown-selected=${(e: CustomEvent) => {
             const value = e.detail.item.value;
-            if (value === "p") {
-              this.executeCommand(() => this.editorService.setParagraph());
-            } else {
-              const level = parseInt(value.replace("h", "")) as HeadingLevel;
-              this.executeCommand(() => this.editorService.setHeading(level));
-            }
+            this.executeCommand(() =>
+              value === "p"
+                ? this.editorService.setParagraph()
+                : this.editorService.setHeading(
+                    parseInt(value.replace("h", "")) as HeadingLevel,
+                  ),
+            );
           }}
         >
           <cds-dropdown-item value="p">Paragraph</cds-dropdown-item>
@@ -546,10 +543,7 @@ export class WcWysiwyg extends LitElement {
    * Render table operations menu
    */
   private renderTableOperations() {
-    if (!this.isActive("table")) {
-      return nothing;
-    }
-
+    if (!this.isActive("table")) return nothing;
     return html`
       <cds-stack class="toolbar-group" orientation=${this.orientation}>
         <div data-floating-menu-container style="position: relative;">
@@ -569,59 +563,51 @@ export class WcWysiwyg extends LitElement {
                   this.executeCommand(() =>
                     this.editorService.addColumnBefore(),
                   )}
+                >${TABLE_MENU_ITEMS.addColumnBefore}</cds-overflow-menu-item
               >
-                ${TABLE_MENU_ITEMS.addColumnBefore}
-              </cds-overflow-menu-item>
               <cds-overflow-menu-item
                 @click=${() =>
                   this.executeCommand(() =>
                     this.editorService.addColumnAfter(),
                   )}
+                >${TABLE_MENU_ITEMS.addColumnAfter}</cds-overflow-menu-item
               >
-                ${TABLE_MENU_ITEMS.addColumnAfter}
-              </cds-overflow-menu-item>
               <cds-overflow-menu-item
                 @click=${() =>
                   this.executeCommand(() => this.editorService.deleteColumn())}
+                >${TABLE_MENU_ITEMS.deleteColumn}</cds-overflow-menu-item
               >
-                ${TABLE_MENU_ITEMS.deleteColumn}
-              </cds-overflow-menu-item>
               <cds-overflow-menu-item
                 divider
                 @click=${() =>
                   this.executeCommand(() => this.editorService.addRowBefore())}
+                >${TABLE_MENU_ITEMS.addRowBefore}</cds-overflow-menu-item
               >
-                ${TABLE_MENU_ITEMS.addRowBefore}
-              </cds-overflow-menu-item>
               <cds-overflow-menu-item
                 @click=${() =>
                   this.executeCommand(() => this.editorService.addRowAfter())}
+                >${TABLE_MENU_ITEMS.addRowAfter}</cds-overflow-menu-item
               >
-                ${TABLE_MENU_ITEMS.addRowAfter}
-              </cds-overflow-menu-item>
               <cds-overflow-menu-item
                 @click=${() =>
                   this.executeCommand(() => this.editorService.deleteRow())}
+                >${TABLE_MENU_ITEMS.deleteRow}</cds-overflow-menu-item
               >
-                ${TABLE_MENU_ITEMS.deleteRow}
-              </cds-overflow-menu-item>
               <cds-overflow-menu-item
                 divider
                 @click=${() =>
                   this.executeCommand(() =>
                     this.editorService.toggleHeaderRow(),
                   )}
+                >${TABLE_MENU_ITEMS.toggleHeaderRow}</cds-overflow-menu-item
               >
-                ${TABLE_MENU_ITEMS.toggleHeaderRow}
-              </cds-overflow-menu-item>
               <cds-overflow-menu-item
                 divider
                 danger
                 @click=${() =>
                   this.executeCommand(() => this.editorService.deleteTable())}
+                >${TABLE_MENU_ITEMS.deleteTable}</cds-overflow-menu-item
               >
-                ${TABLE_MENU_ITEMS.deleteTable}
-              </cds-overflow-menu-item>
             </cds-overflow-menu-body>
           </cds-overflow-menu>
         </div>
